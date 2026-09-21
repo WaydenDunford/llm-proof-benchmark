@@ -38,10 +38,12 @@ output area.
 
 ## Resource choice
 
-The notebook starts with one 7B model because a free T4 has about 15 GB of VRAM.
-Do not enable all three configured 7B/8B models together in one Colab session. Run
-one model, download the results, then change the selected model and run another
-benchmark if you want to compare models.
+The notebook has a ready-made selector for each model and an optional all-model
+configuration. A free T4 has about 15 GB of VRAM, so models cannot remain loaded
+together. The benchmark handles an all-model run safely by loading one 4-bit model,
+generating its proof, unloading it and clearing GPU memory, then proceeding to the
+next model. The initial all-model download needs roughly 44 GB in Colab's temporary
+runtime storage and can take a substantial amount of time.
 
 It uses `--math-shepherd-backend mock` for the first real proof run. Proof generation
 is real; only the optional Math-Shepherd verifier is mocked because its separate 7B
