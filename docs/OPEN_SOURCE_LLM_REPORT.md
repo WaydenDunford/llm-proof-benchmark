@@ -32,7 +32,7 @@ theorem proof.
 | Evaluator | Status | Reason |
 |---|---|---|
 | ChatGPT blind evaluation | Pending import for the successful DeepSeek run | The generated Markdown bundle is anonymous by design. Once ChatGPT returns its required JSON, importing it will validate the proof IDs and update the evaluations JSON, report, and Excel workbook. |
-| Math-Shepherd | Real 4-bit Colab evaluation is configured; the earlier successful DeepSeek run used mock mode | The configured checkpoint is a separate Mistral 7B process-reward model. The revised workflow unloads the generator, then loads Math-Shepherd in 4-bit mode, so it does not compete for T4 VRAM. Its per-step scores are a supplementary automated signal, not a formal proof checker. [Checkpoint configuration](https://huggingface.co/peiyi9979/math-shepherd-mistral-7b-prm/blob/main/config.json) and [Math-Shepherd paper](https://arxiv.org/abs/2312.08935). |
+| Math-Shepherd | Real checkpoint with an adapted 4-bit Colab scoring method; the earlier successful DeepSeek run used mock mode | The configured checkpoint is a separate Mistral 7B process-reward model. The revised workflow unloads the generator, then loads Math-Shepherd in 4-bit mode. The benchmark scores each numbered theorem-proof step from `+` versus `-` next-token probabilities. This is an adaptation by this project, and is a supplementary automated signal rather than a formal proof checker or an official Math-Shepherd theorem-proof metric. [Checkpoint configuration](https://huggingface.co/peiyi9979/math-shepherd-mistral-7b-prm/blob/main/config.json) and [Math-Shepherd paper](https://arxiv.org/abs/2312.08935). |
 
 ## Why the local run failed
 

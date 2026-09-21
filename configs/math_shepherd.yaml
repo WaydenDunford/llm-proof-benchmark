@@ -6,4 +6,4 @@ device: auto
 dtype: float16
 load_in_4bit: true
 max_new_tokens: 512
-version: math_shepherd_v1
+version: math_shepherd_adapted_v1

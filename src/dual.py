@@ -91,8 +91,11 @@ def _steps(text: str) -> list[tuple[str, str]]:
 def math_shepherd(root: Path, proofs_file: Path, backend: str | None = None) -> Path:
     """Evaluate every successful proof into a single evaluation document.
 
-    The mock mode is deterministic test data. Transformers mode uses a local
-    verifier checkpoint as a JSON-producing judge; it never uses an API.
+    The mock mode is deterministic test data. Transformers mode adapts the local
+    Math-Shepherd process-reward checkpoint to numbered natural-language proof
+    steps: it compares next-token probabilities for '+' and '-'. It is an
+    auxiliary score, not a formal-proof verifier or the checkpoint's official
+    theorem-proving evaluation protocol.
     """
     proofs = _read(proofs_file)
     config = yaml.safe_load((root / "configs/math_shepherd.yaml").read_text(encoding="utf-8"))
@@ -133,7 +136,7 @@ def math_shepherd(root: Path, proofs_file: Path, backend: str | None = None) -> 
                     values = torch.stack([logits[plus_ids[-1]], logits[minus_ids[-1]]])
                     score = float(torch.softmax(values, dim=0)[0].item())
                     scores.append({"step_id": sid, "step_text": text, "score": round(score, 4)})
-                verifier = {"status": "success", "mean_score": round(sum(x["score"] for x in scores) / len(scores), 4), "minimum_score": min(x["score"] for x in scores), "weakest_step": min(scores, key=lambda x: x["score"])["step_id"], "step_scores": scores, "version": config.get("version")}
+                verifier = {"status": "success", "mean_score": round(sum(x["score"] for x in scores) / len(scores), 4), "minimum_score": min(x["score"] for x in scores), "weakest_step": min(scores, key=lambda x: x["score"])["step_id"], "step_scores": scores, "version": config.get("version"), "scoring_method": "adapted_next_token_plus_minus"}
             else:
                 verifier = {"status": "error", "mean_score": None, "minimum_score": None, "weakest_step": None, "step_scores": [], "error": model_error}
         entries.append({"proof_id": item["proof_id"], "model_name": item["model_name"], "model_id": item["model_id"], "generation_status": item["status"], "math_shepherd": verifier, "chatgpt": {"status": "pending"}, "comparison": {"same_top_level_assessment": None, "agreement_label": "pending"}})

@@ -46,8 +46,10 @@ next model. The separate Math-Shepherd checkpoint is loaded only after generatio
 The initial all-model run needs roughly 55–60 GB in Colab's temporary runtime
 storage and can take a substantial amount of time.
 
-It uses the real `transformers` Math-Shepherd backend after proof generation. The
+It uses the real `transformers` Math-Shepherd checkpoint after proof generation. The
 generator is unloaded first; Math-Shepherd then loads separately in 4-bit mode on the
-T4 and produces per-step process-reward scores. ChatGPT's blind evaluation is
-imported afterward as an independent manual evaluation in the same canonical results
-file.
+T4. The benchmark adapts it to numbered theorem-proof steps by comparing its next
+token probabilities for `+` and `-`; this is an auxiliary model score, not a formal
+proof check or the checkpoint's official theorem-proof protocol. ChatGPT's blind
+evaluation is imported afterward as an independent manual evaluation in the same
+canonical results file.
