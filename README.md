@@ -5,6 +5,10 @@ Each run creates one canonical proofs JSON and one canonical evaluations JSON. L
 Math-Shepherd verification and manual blind ChatGPT Plus evaluation merge into that
 single evaluations file. A global Excel workbook updates automatically after both.
 
+For the full Google Colab workflow, open
+[`COLAB.md`](COLAB.md) or run
+[`notebooks/llm_proof_benchmark_colab.ipynb`](notebooks/llm_proof_benchmark_colab.ipynb).
+
 ## Recommended workflow
 
 ```powershell
