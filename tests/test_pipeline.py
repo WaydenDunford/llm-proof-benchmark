@@ -5,7 +5,7 @@ import shutil
 from openpyxl import load_workbook
 import pytest
 from src.benchmark import run_benchmark
-from src.dual import bundle, import_chatgpt, math_shepherd
+from src.dual import _steps, bundle, import_chatgpt, math_shepherd
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -61,6 +61,24 @@ def test_blind_bundle_and_import_updates_same_file_and_excel(root):
     book = load_workbook(root / "results/benchmark_results.xlsx")
     assert book["Results"].max_row == rows_before
     assert [row[23].value for row in book["Results"].iter_rows(min_row=2) if row[0].value == proofs["run_id"]] == [9, 9, 9]
+
+
+def test_chatgpt_step_scores_share_the_math_shepherd_step_sheet(root):
+    proof_file = run_benchmark(root, "example_theorem", backend="mock")
+    math_shepherd(root, proof_file, "mock")
+    markdown, _ = bundle(root, proof_file)
+    assert "Shared step rubric" in markdown.read_text()
+    proofs = json.loads(proof_file.read_text()); data = json.loads(chatgpt_file(root, proofs).read_text(encoding="utf-8-sig"))
+    by_id = {proof["proof_id"]: proof for proof in proofs["proofs"]}
+    for evaluation in data["evaluations"]:
+        evaluation["step_evaluations"] = [{"step_id": step_id, "score": 2, "status": "sound", "comment": "Supported."}
+                                        for step_id, _ in _steps(by_id[evaluation["proof_id"]]["proof"])]
+    source = root / "detailed_steps.json"; source.write_text(json.dumps(data), encoding="utf-8")
+    import_chatgpt(root, proofs["run_id"], source)
+    book = load_workbook(root / "results/benchmark_results.xlsx")
+    headers = [cell.value for cell in book["MathShepherdSteps"][1]]
+    assert "ChatGPT Step Score (0-2)" in headers
+    assert all(row[7].value == 2 for row in book["MathShepherdSteps"].iter_rows(min_row=2))
 
 
 def test_historical_runs_are_preserved(root):

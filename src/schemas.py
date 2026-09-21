@@ -148,6 +148,14 @@ class EvaluationRecord(Schema):
     attempts: list[dict[str, Any]] = Field(default_factory=list)
 
 
+class StepEvaluation(Schema):
+    """A human evaluator's judgment of one proof step shared with Math-Shepherd."""
+    step_id: str = Field(pattern=r"^S[0-9]+$")
+    score: Score
+    status: Literal["sound", "minor_gap", "invalid"]
+    comment: str
+
+
 class ImportedEvaluation(Schema):
     """One result supplied by a human-operated ChatGPT Plus evaluation session."""
     proof_id: str = Field(pattern=r"^P[0-9]{3}$")
@@ -158,6 +166,7 @@ class ImportedEvaluation(Schema):
     critical_issues: list[str]
     strengths: list[str]
     evaluator_comment: str
+    step_evaluations: list[StepEvaluation] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def total_matches(self):

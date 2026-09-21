@@ -17,7 +17,7 @@ from .utils import atomic_text
 
 RESULT_HEADERS = ["Run ID", "Date", "Theorem ID", "Theorem Title", "Difficulty", "Prompt", "Prompt Version", "Proof ID", "Model Name", "Model ID", "Backend", "Generation Status", "Runtime Seconds", "Input Tokens", "Output Tokens", "Math-Shepherd Mean Score", "Math-Shepherd Minimum Score", "Math-Shepherd Weakest Step", "ChatGPT Assumption Handling", "ChatGPT Logical Correctness", "ChatGPT Completeness", "ChatGPT Mathematical Rigor", "ChatGPT Clarity", "ChatGPT Total Score", "ChatGPT Verdict", "ChatGPT First Error Step", "Agreement Label", "Critical Issues", "Strengths", "Evaluator Comment"]
 PROOF_HEADERS = ["Run ID", "Theorem ID", "Proof ID", "Model Name", "Model ID", "Proof Text"]
-STEP_HEADERS = ["Run ID", "Theorem ID", "Proof ID", "Model Name", "Step ID", "Step Text", "Math-Shepherd Score"]
+STEP_HEADERS = ["Run ID", "Theorem ID", "Proof ID", "Model Name", "Step ID", "Step Text", "Math-Shepherd Score", "ChatGPT Step Score (0-2)", "ChatGPT Step Status", "ChatGPT Step Comment", "Score Difference (MS - ChatGPT/2)"]
 RUN_HEADERS = ["Run ID", "Timestamp", "Theorem ID", "Theorem Title", "Prompt", "Temperature", "Top P", "Max New Tokens", "Seed", "Number of Models", "Number Successful", "Number Failed", "Math-Shepherd Version", "ChatGPT Evaluator Version", "Git Commit", "GPU", "Python Version", "Transformers Version"]
 
 
@@ -72,11 +72,12 @@ def bundle(root: Path, proofs_file: Path) -> tuple[Path, Path]:
     proofs = _read(proofs_file)
     _, mapping_path = create_mapping(root, proofs_file)
     theorem = proofs["theorem"]
-    parts = ["# LLM Proof Evaluation Task", "## Instructions", "Evaluate anonymous proofs independently. Do not infer model identity. Return only the required JSON.", "## Theorem", theorem["title"], theorem["statement"], "## Assumptions", *[f"- {x}" for x in theorem.get("assumptions", [])], "## Allowed context", *[f"- {x}" for x in theorem.get("allowed_context", [])], "## Rubric", "Score assumption_handling, logical_correctness, completeness, mathematical_rigor, and clarity as integers 0–2. total_score is their sum (0–10). verdict is correct, mostly_correct, flawed, or incorrect."]
+    parts = ["# LLM Proof Evaluation Task", "## Instructions", "Evaluate anonymous proofs independently. Do not infer model identity. Return only the required JSON.", "## Theorem", theorem["title"], theorem["statement"], "## Assumptions", *[f"- {x}" for x in theorem.get("assumptions", [])], "## Allowed context", *[f"- {x}" for x in theorem.get("allowed_context", [])], "## Whole-proof rubric", "Score assumption_handling, logical_correctness, completeness, mathematical_rigor, and clarity as integers 0–2. total_score is their sum (0–10). verdict is correct, mostly_correct, flawed, or incorrect.", "## Shared step rubric", "For every required step ID, return score 2 only when the step is mathematically sound and adequately justified; 1 when it is plausible but has a minor gap; 0 when it is invalid, unsupported, or contradicts the assumptions. Use status sound, minor_gap, or invalid respectively. Give one short comment per step. These step ratings will be compared with a separate Math-Shepherd process-reward score; do not infer a model identity from them."]
     for item in proofs["proofs"]:
         if item["proof_id"]:
-            parts += [f"## Proof {item['proof_id']}", item["proof"], "---"]
-    shape = {"run_id": proofs["run_id"], "theorem_id": theorem["id"], "evaluator_id": "chatgpt_plus_run_1", "prompt_version": "chatgpt_evaluator_v1", "evaluations": [{"proof_id": "P001", "scores": {"assumption_handling": 0, "logical_correctness": 0, "completeness": 0, "mathematical_rigor": 0, "clarity": 0}, "total_score": 0, "verdict": "incorrect", "first_error_step": None, "critical_issues": [], "strengths": [], "evaluator_comment": ""}]}
+            step_ids = [step_id for step_id, _ in _steps(item["proof"])]
+            parts += [f"## Proof {item['proof_id']}", item["proof"], "Required step IDs for detailed evaluation: " + ", ".join(step_ids), "---"]
+    shape = {"run_id": proofs["run_id"], "theorem_id": theorem["id"], "evaluator_id": "chatgpt_plus_run_1", "prompt_version": "chatgpt_evaluator_v2", "evaluations": [{"proof_id": "P001", "scores": {"assumption_handling": 0, "logical_correctness": 0, "completeness": 0, "mathematical_rigor": 0, "clarity": 0}, "total_score": 0, "verdict": "incorrect", "first_error_step": None, "critical_issues": [], "strengths": [], "evaluator_comment": "", "step_evaluations": [{"step_id": "S1", "score": 0, "status": "invalid", "comment": ""}]}]}
     parts += ["## REQUIRED OUTPUT FORMAT", "Return ONLY valid JSON. No Markdown fences or surrounding prose.", "```json", json.dumps(shape, indent=2), "```", "Evaluate every proof; do not omit proof IDs."]
     target = root / "results/evaluation_input" / f"{theorem['id']}_{proofs['run_id']}_chatgpt_bundle.md"
     atomic_text(target, "\n\n".join(parts) + "\n")
@@ -167,6 +168,11 @@ def import_chatgpt(root: Path, run_id: str, source: Path) -> Path:
     received = {x.proof_id for x in imported.evaluations}
     if received != set(mapping): raise ValueError("ChatGPT proof IDs are missing or unknown")
     document = _read(evaluations_file); by_id = {x.proof_id: x for x in imported.evaluations}
+    expected_steps = {item["proof_id"]: {step_id for step_id, _ in _steps(item["proof"])} for item in proofs["proofs"] if item["proof_id"]}
+    for item in imported.evaluations:
+        supplied_steps = {step.step_id for step in item.step_evaluations}
+        if supplied_steps and supplied_steps != expected_steps[item.proof_id]:
+            raise ValueError(f"ChatGPT step IDs for {item.proof_id} do not match the required proof steps")
     for entry in document["evaluations"]:
         if not entry["proof_id"]: continue
         item = by_id[entry["proof_id"]]
@@ -190,6 +196,11 @@ def _sheet(book, title, headers):
             sheet.cell(1, column).value = header
         for cell in sheet[1]: cell.font = Font(bold=True); cell.fill = PatternFill("solid", fgColor="D9EAF7")
         sheet.freeze_panes = "A2"; sheet.auto_filter.ref = f"A1:{get_column_letter(len(headers))}1"
+    else:
+        for column, header in enumerate(headers, 1):
+            if sheet.cell(1, column).value is None:
+                sheet.cell(1, column).value = header
+        sheet.auto_filter.ref = f"A1:{get_column_letter(len(headers))}{sheet.max_row}"
     return sheet
 
 
@@ -219,7 +230,11 @@ def update_excel(root: Path, proofs: dict, evaluations: dict) -> Path:
         entry = by_id.get(proof["proof_id"], {}); ms = entry.get("math_shepherd", {}); cg = entry.get("chatgpt", {})
         row = [proofs["run_id"], proofs["timestamp"], theorem["id"], theorem["title"], theorem.get("difficulty"), proofs["prompt"]["name"], proofs["prompt"]["version"], proof["proof_id"], proof["model_name"], proof["model_id"], proof["backend"], proof["status"], proof["runtime_seconds"], proof["input_tokens"], proof["output_tokens"], ms.get("mean_score"), ms.get("minimum_score"), ms.get("weakest_step"), *(cg.get("scores", {}).get(k) for k in ["assumption_handling", "logical_correctness", "completeness", "mathematical_rigor", "clarity"]), cg.get("total_score"), cg.get("verdict"), cg.get("first_error_step"), entry.get("comparison", {}).get("agreement_label"), "; ".join(cg.get("critical_issues", [])), "; ".join(cg.get("strengths", [])), cg.get("evaluator_comment")]
         _upsert(results, (1, 8), row); _upsert(proof_sheet, (1, 3), [proofs["run_id"], theorem["id"], proof["proof_id"], proof["model_name"], proof["model_id"], proof["proof"]])
-        for step in ms.get("step_scores", []): _upsert(steps, (1, 3, 5), [proofs["run_id"], theorem["id"], proof["proof_id"], proof["model_name"], step["step_id"], step["step_text"], step["score"]])
+        human_steps = {item["step_id"]: item for item in cg.get("step_evaluations", [])}
+        for step in ms.get("step_scores", []):
+            human = human_steps.get(step["step_id"], {}); human_score = human.get("score")
+            difference = round(step["score"] - human_score / 2, 4) if isinstance(human_score, int) else None
+            _upsert(steps, (1, 3, 5), [proofs["run_id"], theorem["id"], proof["proof_id"], proof["model_name"], step["step_id"], step["step_text"], step["score"], human_score, human.get("status"), human.get("comment"), difference])
     success = sum(p["status"] == "success" for p in proofs["proofs"]); meta = proofs.get("metadata", {}); pkg = meta.get("packages", {})
     _upsert(runs, (1,), [proofs["run_id"], proofs["timestamp"], theorem["id"], theorem["title"], proofs["prompt"]["name"], proofs["generation_settings"]["temperature"], proofs["generation_settings"]["top_p"], proofs["generation_settings"]["max_new_tokens"], proofs["generation_settings"]["seed"], len(proofs["proofs"]), success, len(proofs["proofs"]) - success, evaluations.get("math_shepherd_version"), evaluations.get("chatgpt_metadata", {}).get("prompt_version"), meta.get("git_commit"), ", ".join(meta.get("gpu_names", [])), meta.get("python_version"), pkg.get("transformers")])
     summary = _sheet(book, "Summary", ["Model", "Number of Proofs", "Average ChatGPT Score", "Average Math-Shepherd Score", "Correct Count", "Mostly Correct Count", "Flawed Count", "Incorrect Count"])
