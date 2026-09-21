@@ -1,0 +1,17 @@
+# Independent, blind judge. Replace this with a stronger/different model for research.
+model:
+  name: judge
+  backend: transformers
+  model_id: Qwen/Qwen3-8B
+  revision: main
+  device: auto
+  dtype: auto
+  chat_template_kwargs:
+    enable_thinking: false
+generation:
+  temperature: 0
+  top_p: 1
+  max_new_tokens: 2048
+  do_sample: false
+  seed: 42
+retries: 1

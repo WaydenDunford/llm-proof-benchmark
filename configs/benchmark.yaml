@@ -1,0 +1,16 @@
+generation:
+  temperature: 0.2
+  top_p: 0.95
+  max_new_tokens: 4096
+  do_sample: true
+  seed: 42
+benchmark:
+  repetitions: 1
+  save_prompts: true
+  save_raw_outputs: true
+evaluation:
+  mode: manual_chatgpt
+  blind: true
+  randomize_proof_order: true
+  random_seed: 42
+  prompt_version: chatgpt_evaluator_v1

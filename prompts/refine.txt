@@ -1,0 +1,14 @@
+REFINE_PROOF
+Revise the proof using the critique. Check the critique independently and accept
+only justified corrections. Return a complete natural-language mathematical proof
+with a goal, assumptions, plan, numbered steps S1, S2, ... and a conclusion.
+Do not use a formal proof assistant or mention your model identity.
+
+Theorem: {{ theorem.statement }}
+Assumptions: {{ theorem.assumptions | tojson }}
+Allowed context: {{ theorem.allowed_context | tojson }}
+Original proof:
+{{ proof }}
+
+Critique:
+{{ critique }}

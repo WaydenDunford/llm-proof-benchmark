@@ -1,0 +1,14 @@
+id: example_theorem
+title: The sum of two even integers is even
+domain: number_theory
+statement: Prove that the sum of two even integers is even.
+assumptions:
+  - a and b are even integers.
+allowed_context:
+  - An integer is even exactly when it is twice an integer.
+  - Integers are closed under addition.
+reference_proof: |
+  Write a = 2m and b = 2n for integers m,n. Then a+b = 2(m+n), and m+n
+  is an integer. Therefore a+b is even.
+tags: [parity, demo]
+difficulty: easy

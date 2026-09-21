@@ -1,0 +1,38 @@
+{
+  "run_id": "REPLACED_BY_TEST",
+  "theorem_id": "example_theorem",
+  "evaluator_id": "chatgpt_plus_run_1",
+  "prompt_version": "chatgpt_evaluator_v1",
+  "evaluations": [
+    {
+      "proof_id": "P001",
+      "scores": {"assumption_handling": 2, "logical_correctness": 2, "completeness": 2, "mathematical_rigor": 1, "clarity": 2},
+      "total_score": 9,
+      "verdict": "mostly_correct",
+      "first_error_step": null,
+      "critical_issues": [],
+      "strengths": ["Uses the definition of evenness correctly."],
+      "evaluator_comment": "The proof establishes the conclusion."
+    },
+    {
+      "proof_id": "P002",
+      "scores": {"assumption_handling": 2, "logical_correctness": 2, "completeness": 2, "mathematical_rigor": 1, "clarity": 2},
+      "total_score": 9,
+      "verdict": "mostly_correct",
+      "first_error_step": null,
+      "critical_issues": [],
+      "strengths": ["Uses the definition of evenness correctly."],
+      "evaluator_comment": "The proof establishes the conclusion."
+    },
+    {
+      "proof_id": "P003",
+      "scores": {"assumption_handling": 2, "logical_correctness": 2, "completeness": 2, "mathematical_rigor": 1, "clarity": 2},
+      "total_score": 9,
+      "verdict": "mostly_correct",
+      "first_error_step": null,
+      "critical_issues": [],
+      "strengths": ["Uses the definition of evenness correctly."],
+      "evaluator_comment": "The proof establishes the conclusion."
+    }
+  ]
+}

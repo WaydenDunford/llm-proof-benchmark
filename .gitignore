@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+.env
+results/raw/*
+results/proofs/*
+results/evaluations/*
+results/benchmark_results.xlsx
+results/evaluation_input/*
+results/evaluation_output/*
+results/evaluation_maps/*
+results/evaluated/*
+results/reports/*
+!results/**/.gitkeep

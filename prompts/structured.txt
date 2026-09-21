@@ -1,0 +1,18 @@
+Write a natural-language mathematical proof, without Lean, Coq, Isabelle or any
+formal proof assistant. Do not mention your model identity. Use this structure:
+1. Restatement of the goal.
+2. Relevant assumptions.
+3. Proof plan.
+4. Numbered proof steps S1, S2, S3, ... with explicit justifications.
+5. Final conclusion addressing the entire goal.
+Use the allowed context; justify any additional facts you need.
+
+Theorem:
+{{ theorem.statement }}
+
+Assumptions:
+{% for item in theorem.assumptions %}- {{ item }}
+{% endfor %}
+Allowed context:
+{% for item in theorem.allowed_context %}- {{ item }}
+{% endfor %}

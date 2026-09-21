@@ -1,0 +1,8 @@
+# A local verifier. The mock backend exists only for end-to-end testing.
+backend: transformers
+model_id: peiyi9979/math-shepherd-mistral-7b-prm
+revision: main
+device: auto
+dtype: auto
+max_new_tokens: 512
+version: math_shepherd_v1

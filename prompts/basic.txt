@@ -1,0 +1,13 @@
+Give a complete natural-language mathematical proof. Do not use Lean, Coq,
+Isabelle or any formal proof assistant. Use only the assumptions and allowed
+context below; justify other facts you need. Do not mention your model identity.
+
+Theorem:
+{{ theorem.statement }}
+
+Assumptions:
+{% for item in theorem.assumptions %}- {{ item }}
+{% endfor %}
+Allowed context:
+{% for item in theorem.allowed_context %}- {{ item }}
+{% endfor %}

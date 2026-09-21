@@ -1,0 +1,19 @@
+id: T002
+title: Uniqueness of a limit in a metric space
+domain: analysis
+statement: |
+  Let (x_n) be a sequence in a metric space (X,d). If x_n converges to a
+  and x_n converges to b, prove that a = b.
+assumptions:
+  - d is a metric on X.
+  - a and b belong to X.
+  - The same sequence converges to both a and b.
+allowed_context:
+  - Definition of convergence in a metric space.
+  - Triangle inequality and definiteness of a metric.
+reference_proof: |
+  Suppose d(a,b) = r > 0. Convergence supplies an N such that n >= N implies
+  d(a,x_n) < r/3 and d(x_n,b) < r/3. The triangle inequality gives
+  r <= d(a,x_n) + d(x_n,b) < 2r/3, a contradiction. Thus d(a,b)=0 and a=b.
+tags: [limits, metric_spaces]
+difficulty: easy

@@ -1,0 +1,24 @@
+models:
+  - name: deeptheorem-qwen-7b
+    enabled: true
+    backend: transformers
+    model_id: Jiahao004/DeepTheorem-Qwen-7B-RL
+    revision: main
+    device: auto
+    dtype: auto
+  - name: deepseek-r1-distill-qwen-7b
+    enabled: true
+    backend: transformers
+    model_id: deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+    revision: main
+    device: auto
+    dtype: auto
+  - name: qwen3
+    enabled: true
+    backend: transformers
+    model_id: Qwen/Qwen3-8B
+    revision: main
+    device: auto
+    dtype: auto
+    chat_template_kwargs:
+      enable_thinking: false

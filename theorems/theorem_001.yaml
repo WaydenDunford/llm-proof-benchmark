@@ -1,0 +1,26 @@
+id: T001
+title: Lyapunov stability for a linear system
+domain: control_theory
+statement: |
+  Let x_dot = Ax on R^n. Suppose there exists P = P^T > 0 such that
+  A^T P + P A < 0. Prove that the origin is globally asymptotically stable.
+assumptions:
+  - A is a real n-by-n constant matrix, where n is a positive integer.
+  - P is symmetric positive definite.
+  - A^T P + P A is negative definite.
+allowed_context:
+  - Definitions of positive definiteness and global asymptotic stability.
+  - Spectral bounds for quadratic forms of real symmetric matrices.
+  - Differentiation of V(x) = x^T P x along a solution.
+  - Scalar differential inequality integration and global existence for linear ODEs.
+reference_proof: |
+  Put Q = -(A^T P + P A), p_min = lambda_min(P), p_max = lambda_max(P),
+  and q_min = lambda_min(Q). All are positive. Along solutions,
+  V_dot = -x^T Q x <= -q_min ||x||^2 <= -(q_min/p_max)V.
+  Hence V(t) <= V(0) exp(-q_min t/p_max), so
+  ||x(t)|| <= sqrt(p_max/p_min) exp(-q_min t/(2p_max)) ||x(0)||.
+  This bound implies stability (choose delta = epsilon sqrt(p_min/p_max))
+  and convergence to zero for every initial condition. Linear solutions exist
+  for all t >= 0, so the origin is globally asymptotically stable.
+tags: [lyapunov, stability, linear_systems]
+difficulty: easy
