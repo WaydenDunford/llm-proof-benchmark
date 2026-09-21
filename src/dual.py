@@ -84,6 +84,45 @@ def bundle(root: Path, proofs_file: Path) -> tuple[Path, Path]:
     return target, mapping_path
 
 
+def add_manual_proofs(root: Path, proofs_file: Path, source_dir: Path) -> Path:
+    """Append user-supplied online-model proofs from Markdown files to one local run.
+
+    Each file must have YAML front matter containing model_name and model_id, followed
+    by the proof text. This keeps model identities local; the later bundle is blind.
+    """
+    proofs = _read(proofs_file)
+    existing_evaluation = evaluation_path(root, proofs["theorem"]["id"], proofs["run_id"])
+    if existing_evaluation.exists():
+        prior = _read(existing_evaluation)
+        if any(item.get("chatgpt", {}).get("status") == "success" for item in prior.get("evaluations", [])):
+            raise ValueError("Cannot add proofs after a ChatGPT evaluation has been imported; start a new run.")
+    files = sorted(source_dir.glob("*.md"))
+    if not files:
+        raise ValueError("No Markdown proof files were found")
+    names = {item["model_name"] for item in proofs["proofs"]}
+    for path in files:
+        match = re.match(r"\A---\s*\r?\n(.*?)\r?\n---\s*\r?\n(.*)\Z", path.read_text(encoding="utf-8"), re.DOTALL)
+        if not match:
+            raise ValueError(f"{path.name} must begin with YAML front matter")
+        metadata = yaml.safe_load(match.group(1)) or {}; proof = match.group(2).strip()
+        name, model_id = metadata.get("model_name"), metadata.get("model_id")
+        if not isinstance(name, str) or not name.strip() or not isinstance(model_id, str) or not model_id.strip() or not proof:
+            raise ValueError(f"{path.name} requires non-empty model_name, model_id, and proof text")
+        if name in names:
+            raise ValueError(f"Duplicate model_name: {name}")
+        names.add(name)
+        proofs["proofs"].append({"proof_id": None, "model_name": name, "model_id": model_id,
+                                 "backend": "manual", "status": "success", "proof": proof,
+                                 "runtime_seconds": None, "input_tokens": None, "output_tokens": None,
+                                 "repetition": 1, "error": None, "source_file": path.name})
+    successful = [item for item in proofs["proofs"] if item["status"] == "success" and item.get("proof")]
+    random.Random(42).shuffle(successful)
+    for index, item in enumerate(successful, 1): item["proof_id"] = f"P{index:03d}"
+    proofs["metadata"]["manual_proof_sources"] = [path.name for path in files]
+    atomic_text(proofs_file, json.dumps(proofs, indent=2, ensure_ascii=False) + "\n")
+    return proofs_file
+
+
 def _steps(text: str) -> list[tuple[str, str]]:
     found = re.findall(r"(?m)^\s*(S\d+)\.?\s*(.*)$", text)
     return found or [("S1", text)]

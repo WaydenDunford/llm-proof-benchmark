@@ -5,7 +5,7 @@ import shutil
 from openpyxl import load_workbook
 import pytest
 from src.benchmark import run_benchmark
-from src.dual import _steps, bundle, import_chatgpt, math_shepherd
+from src.dual import _steps, add_manual_proofs, bundle, import_chatgpt, math_shepherd
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -87,6 +87,21 @@ def test_historical_runs_are_preserved(root):
     book = load_workbook(root / "results/benchmark_results.xlsx")
     run_ids = {row[0].value for row in book["Runs"].iter_rows(min_row=2)}
     assert len(run_ids) == 2
+
+
+def test_manual_markdown_proofs_can_join_a_local_run(root):
+    proof_file = run_benchmark(root, "example_theorem", backend="mock")
+    directory = root / "online"; directory.mkdir()
+    for name in ("openai", "claude", "gemini", "deepseek-online"):
+        (directory / f"{name}.md").write_text(f"---\nmodel_name: {name}\nmodel_id: manual/{name}\n---\nS1. A supplied proof step.\n", encoding="utf-8")
+    add_manual_proofs(root, proof_file, directory)
+    proofs = json.loads(proof_file.read_text())
+    assert len(proofs["proofs"]) == 7
+    assert {proof["proof_id"] for proof in proofs["proofs"]} == {f"P{i:03d}" for i in range(1, 8)}
+    math_shepherd(root, proof_file, "mock")
+    markdown, _ = bundle(root, proof_file)
+    text = markdown.read_text()
+    assert "manual/openai" not in text and "openai" not in text
 
 
 def test_import_rejects_missing_proof(root):
