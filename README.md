@@ -9,6 +9,9 @@ For the full Google Colab workflow, open
 [`COLAB.md`](COLAB.md) or run
 [`notebooks/llm_proof_benchmark_colab.ipynb`](notebooks/llm_proof_benchmark_colab.ipynb).
 
+The operational status and evidence for the configured open-source models is in
+[`docs/OPEN_SOURCE_LLM_REPORT.md`](docs/OPEN_SOURCE_LLM_REPORT.md).
+
 ## Recommended workflow
 
 ```powershell
