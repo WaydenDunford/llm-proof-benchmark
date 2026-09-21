@@ -12,6 +12,10 @@ For the full Google Colab workflow, open
 The operational status and evidence for the configured open-source models is in
 [`docs/OPEN_SOURCE_LLM_REPORT.md`](docs/OPEN_SOURCE_LLM_REPORT.md).
 
+The literature-based rationale for choosing the current three models over older and
+larger candidates is in
+[`docs/MODEL_SELECTION_LITERATURE_REPORT.md`](docs/MODEL_SELECTION_LITERATURE_REPORT.md).
+
 ## Recommended workflow
 
 ```powershell
