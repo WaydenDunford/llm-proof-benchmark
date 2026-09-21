@@ -101,10 +101,12 @@ def math_shepherd(root: Path, proofs_file: Path, backend: str | None = None) -> 
     if active_backend == "transformers":
         try:
             import torch
-            from transformers import AutoModelForCausalLM, AutoTokenizer
+            from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
             dtype = config.get("dtype", "auto")
             model_kwargs = {"revision": config.get("revision", "main"), "device_map": config.get("device", "auto")}
             if dtype != "auto": model_kwargs["torch_dtype"] = getattr(torch, dtype)
+            if config.get("load_in_4bit", False):
+                model_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True)
             tokenizer = AutoTokenizer.from_pretrained(config["model_id"], revision=config.get("revision", "main"))
             model = AutoModelForCausalLM.from_pretrained(config["model_id"], **model_kwargs).eval()
         except Exception as exc:
@@ -140,6 +142,8 @@ def math_shepherd(root: Path, proofs_file: Path, backend: str | None = None) -> 
     update_excel(root, proofs, _read(target))
     if model is not None:
         del model
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
     return target
 
 

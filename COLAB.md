@@ -42,10 +42,12 @@ The notebook has a ready-made selector for each model and an optional all-model
 configuration. A free T4 has about 15 GB of VRAM, so models cannot remain loaded
 together. The benchmark handles an all-model run safely by loading one 4-bit model,
 generating its proof, unloading it and clearing GPU memory, then proceeding to the
-next model. The initial all-model download needs roughly 44 GB in Colab's temporary
-runtime storage and can take a substantial amount of time.
+next model. The separate Math-Shepherd checkpoint is loaded only after generation.
+The initial all-model run needs roughly 55–60 GB in Colab's temporary runtime
+storage and can take a substantial amount of time.
 
-It uses `--math-shepherd-backend mock` for the first real proof run. Proof generation
-is real; only the optional Math-Shepherd verifier is mocked because its separate 7B
-model would compete for the same T4 memory. ChatGPT's blind evaluation is imported
-afterward and becomes the manual evaluator in the canonical results file.
+It uses the real `transformers` Math-Shepherd backend after proof generation. The
+generator is unloaded first; Math-Shepherd then loads separately in 4-bit mode on the
+T4 and produces per-step process-reward scores. ChatGPT's blind evaluation is
+imported afterward as an independent manual evaluation in the same canonical results
+file.
