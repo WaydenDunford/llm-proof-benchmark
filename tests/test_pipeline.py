@@ -104,6 +104,28 @@ def test_manual_markdown_proofs_can_join_a_local_run(root):
     assert "manual/openai" not in text and "openai" not in text
 
 
+def test_reupload_replaces_manual_batch_before_grading(root):
+    proof_file = run_benchmark(root, "example_theorem", backend="mock")
+    directory = root / "online"; directory.mkdir()
+    for index in range(4):
+        (directory / f"proof_{index}.md").write_text(
+            f"---\nmodel_name: online-{index}\nmodel_id: manual/{index}\n---\nS1. First version.\n",
+            encoding="utf-8",
+        )
+    add_manual_proofs(root, proof_file, directory)
+    (directory / "proof_0.md").write_text(
+        "---\nmodel_name: revised-online\nmodel_id: manual/revised\n---\nS1. Revised proof.\n",
+        encoding="utf-8",
+    )
+    add_manual_proofs(root, proof_file, directory)
+    proofs = json.loads(proof_file.read_text(encoding="utf-8"))["proofs"]
+    assert len(proofs) == 7
+    assert {p["model_name"] for p in proofs if p["backend"] == "manual"} == {
+        "revised-online", "online-1", "online-2", "online-3"
+    }
+    assert len({p["proof_id"] for p in proofs}) == 7
+
+
 def test_import_rejects_missing_proof(root):
     proof_file = run_benchmark(root, "example_theorem", backend="mock"); math_shepherd(root, proof_file, "mock"); bundle(root, proof_file)
     proofs = json.loads(proof_file.read_text()); data = json.loads(chatgpt_file(root, proofs).read_text(encoding="utf-8-sig")); data["evaluations"].pop()

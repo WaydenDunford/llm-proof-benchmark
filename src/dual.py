@@ -99,7 +99,10 @@ def add_manual_proofs(root: Path, proofs_file: Path, source_dir: Path) -> Path:
     files = sorted(source_dir.glob("*.md"))
     if not files:
         raise ValueError("No Markdown proof files were found")
+    # A new upload replaces the previous manual batch for this run.
+    proofs["proofs"] = [item for item in proofs["proofs"] if item.get("backend") != "manual"]
     names = {item["model_name"] for item in proofs["proofs"]}
+    model_ids = {item["model_id"] for item in proofs["proofs"]}
     for path in files:
         match = re.match(r"\A---\s*\r?\n(.*?)\r?\n---\s*\r?\n(.*)\Z", path.read_text(encoding="utf-8"), re.DOTALL)
         if not match:
@@ -110,7 +113,9 @@ def add_manual_proofs(root: Path, proofs_file: Path, source_dir: Path) -> Path:
             raise ValueError(f"{path.name} requires non-empty model_name, model_id, and proof text")
         if name in names:
             raise ValueError(f"Duplicate model_name: {name}")
-        names.add(name)
+        if model_id in model_ids:
+            raise ValueError(f"Duplicate model_id: {model_id}")
+        names.add(name); model_ids.add(model_id)
         proofs["proofs"].append({"proof_id": None, "model_name": name, "model_id": model_id,
                                  "backend": "manual", "status": "success", "proof": proof,
                                  "runtime_seconds": None, "input_tokens": None, "output_tokens": None,
